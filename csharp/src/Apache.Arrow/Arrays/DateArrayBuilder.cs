@@ -21,11 +21,14 @@ namespace Apache.Arrow
 {
     /// <summary>
     /// The <see cref="DateArrayBuilder{TUnderlying,TArray,TBuilder}"/> class is an abstract array builder that can
-    /// accept dates in the form of <see cref="DateTime"/> or <see cref="DateTimeOffset"/> and convert to some
-    /// underlying date representation.
+    /// accept dates in the form of <see cref="DateOnly"/> (since .NET 6), <see cref="DateTime"/> or <see cref="DateTimeOffset"/>
+    /// and convert to some underlying date representation.
     /// </summary>
     public abstract class DateArrayBuilder<TUnderlying, TArray, TBuilder> :
         DelegatingArrayBuilder<TUnderlying, TArray, TBuilder>,
+#if NET6_0_OR_GREATER
+        IArrowArrayBuilder<DateOnly, TArray, TBuilder>,
+#endif
         IArrowArrayBuilder<DateTime, TArray, TBuilder>,
         IArrowArrayBuilder<DateTimeOffset, TArray, TBuilder>
         where TArray : IArrowArray
@@ -39,6 +42,19 @@ namespace Apache.Arrow
         protected DateArrayBuilder(IArrowArrayBuilder<TUnderlying, TArray, IArrowArrayBuilder<TArray>> innerBuilder)
             : base(innerBuilder)
         { }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Append a date in the form of a <see cref="DateOnly"/> object to the array.
+        /// </summary>
+        /// <param name="value">Date to add.</param>
+        /// <returns>Returns the builder (for fluent-style composition).</returns>
+        public TBuilder Append(DateOnly value)
+        {
+            InnerBuilder.Append(Convert(value));
+            return this as TBuilder;
+        }
+#endif
 
         /// <summary>
         /// Append a date in the form of a <see cref="DateTime"/> object to the array.
@@ -71,6 +87,24 @@ namespace Apache.Arrow
             InnerBuilder.Append(Convert(value));
             return this as TBuilder;
         }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Append a span of dates in the form of <see cref="DateOnly"/> objects to the array.
+        /// </summary>
+        /// <param name="span">Span of dates to add.</param>
+        /// <returns>Returns the builder (for fluent-style composition).</returns>
+        public TBuilder Append(ReadOnlySpan<DateOnly> span)
+        {
+            InnerBuilder.Reserve(span.Length);
+            foreach (var item in span)
+            {
+                InnerBuilder.Append(Convert(item));
+            }
+
+            return this as TBuilder;
+        }
+#endif
 
         /// <summary>
         /// Append a span of dates in the form of <see cref="DateTime"/> objects to the array.
@@ -124,6 +158,19 @@ namespace Apache.Arrow
             return this as TBuilder;
         }
 
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Append a collection of dates in the form of <see cref="DateOnly"/> objects to the array.
+        /// </summary>
+        /// <param name="values">Collection of dates to add.</param>
+        /// <returns>Returns the builder (for fluent-style composition).</returns>
+        public TBuilder AppendRange(IEnumerable<DateOnly> values)
+        {
+            InnerBuilder.AppendRange(values.Select(Convert));
+            return this as TBuilder;
+        }
+#endif
+
         /// <summary>
         /// Append a collection of dates in the form of <see cref="DateTime"/> objects to the array.
         /// </summary>
@@ -155,6 +202,20 @@ namespace Apache.Arrow
             InnerBuilder.AppendRange(values.Select(Convert));
             return this as TBuilder;
         }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Set the value of a date in the form of a <see cref="DateOnly"/> object at the specified index.
+        /// </summary>
+        /// <param name="index">Index at which to set value.</param>
+        /// <param name="value">Date to set.</param>
+        /// <returns>Returns the builder (for fluent-style composition).</returns>
+        public TBuilder Set(int index, DateOnly value)
+        {
+            InnerBuilder.Set(index, Convert(value));
+            return this as TBuilder;
+        }
+#endif
 
         /// <summary>
         /// Set the value of a date in the form of a <see cref="DateTime"/> object at the specified index.
@@ -201,6 +262,12 @@ namespace Apache.Arrow
             InnerBuilder.Swap(i, j);
             return this as TBuilder;
         }
+
+#if NET6_0_OR_GREATER
+        protected static int UnixEpochDayNumber => new DateOnly(1970, 1, 1).DayNumber;
+
+        protected abstract TUnderlying Convert(DateOnly dateOnly);
+#endif
 
         protected abstract TUnderlying Convert(DateTime dateTime);
 

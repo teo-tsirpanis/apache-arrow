@@ -52,6 +52,13 @@ namespace Apache.Arrow
             /// </summary>
             public Builder() : base(new DateBuilder()) { }
 
+#if NET6_0_OR_GREATER
+            protected override long Convert(DateOnly dateOnly)
+            {
+                return (dateOnly.DayNumber - UnixEpochDayNumber) * MillisecondsPerDay;
+            }
+#endif
+
             protected override long Convert(DateTime dateTime)
             {
                 var dateTimeOffset = new DateTimeOffset(

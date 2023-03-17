@@ -44,6 +44,13 @@ namespace Apache.Arrow
             /// </summary>
             public Builder() : base(new DateBuilder()) { }
 
+#if NET6_0_OR_GREATER
+            protected override int Convert(DateOnly dateOnly)
+            {
+                return dateOnly.DayNumber - UnixEpochDayNumber;
+            }
+#endif
+
             protected override int Convert(DateTime dateTime)
             {
                 return (int)(dateTime.Date - _epochDate).TotalDays;
