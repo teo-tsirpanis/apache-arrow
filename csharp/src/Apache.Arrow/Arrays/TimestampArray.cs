@@ -73,19 +73,7 @@ namespace Apache.Arrow
                 TimeSpan timeSpan = value - s_epoch;
                 long ticks = timeSpan.Ticks;
 
-                switch (DataType.Unit)
-                {
-                    case TimeUnit.Nanosecond:
-                        return ticks * 100;
-                    case TimeUnit.Microsecond:
-                        return ticks / 10;
-                    case TimeUnit.Millisecond:
-                        return ticks / TimeSpan.TicksPerMillisecond;
-                    case TimeUnit.Second:
-                        return ticks / TimeSpan.TicksPerSecond;
-                    default:
-                        throw new InvalidOperationException($"unsupported time unit <{DataType.Unit}>");
-                }
+                return Utility.TicksToUnit(ticks, DataType.Unit);
             }
         }
 

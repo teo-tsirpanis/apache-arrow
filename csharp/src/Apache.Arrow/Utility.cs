@@ -13,10 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Apache.Arrow.Flatbuf;
+using Apache.Arrow.Types;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Apache.Arrow
 {
@@ -82,6 +81,23 @@ namespace Apache.Arrow
             }
 
             return newList;
+        }
+
+        public static long TicksToUnit(long ticks, TimeUnit unit)
+        {
+            switch (unit)
+            {
+                case TimeUnit.Nanosecond:
+                    return ticks * 100;
+                case TimeUnit.Microsecond:
+                    return ticks / 10;
+                case TimeUnit.Millisecond:
+                    return ticks / TimeSpan.TicksPerMillisecond;
+                case TimeUnit.Second:
+                    return ticks / TimeSpan.TicksPerSecond;
+                default:
+                    throw new InvalidOperationException($"unsupported time unit <{unit}>");
+            }
         }
     }
 }

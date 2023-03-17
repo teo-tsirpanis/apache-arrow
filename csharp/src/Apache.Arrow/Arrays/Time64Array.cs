@@ -14,7 +14,10 @@
 // limitations under the License.
 
 using Apache.Arrow.Types;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Apache.Arrow
 {
@@ -28,11 +31,31 @@ namespace Apache.Arrow
         /// The <see cref="Builder"/> class can be used to fluently build <see cref="Time64Array"/> objects.
         /// </summary>
         public class Builder : PrimitiveArrayBuilder<long, Time64Array, Builder>
+#if NET6_0_OR_GREATER
+            , IArrowArrayBuilder<TimeOnly, Time64Array, Builder>
+#endif
         {
             protected override Time64Array Build(
                 ArrowBuffer valueBuffer, ArrowBuffer nullBitmapBuffer,
                 int length, int nullCount, int offset) =>
                 new Time64Array(DataType, valueBuffer, nullBitmapBuffer, length, nullCount, offset);
+
+            private long Convert(TimeOnly value) => Utility.TicksToUnit(value.Ticks, DataType.Unit);
+
+            public Builder Append(TimeOnly value) => Append(Convert(value));
+
+            public Builder Append(ReadOnlySpan<TimeOnly> span)
+            {
+                foreach (var timeOnly in span)
+                {
+                    Append(timeOnly);
+                }
+                return this;
+            }
+
+            public Builder AppendRange(IEnumerable<TimeOnly> values) => AppendRange(values.Select(Convert));
+
+            public Builder Set(int index, TimeOnly value) => Set(index, Convert(value));
 
             protected Time64Type DataType { get; }
 
