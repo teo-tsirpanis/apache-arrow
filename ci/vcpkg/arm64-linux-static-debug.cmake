@@ -26,3 +26,9 @@ if(NOT CMAKE_HOST_SYSTEM_PROCESSOR)
                   OUTPUT_VARIABLE CMAKE_HOST_SYSTEM_PROCESSOR
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
+
+# Hide symbols in the AWS SDK. Fixes symbol collisions with
+# other libraries (https://github.com/apache/arrow/issues/42154).
+if("${PORT}" MATCHES "^aws-")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS "-DCMAKE_CXX_VISIBILITY_PRESET=hidden;-DCMAKE_C_VISIBILITY_PRESET=hidden")
+endif()
